@@ -1,0 +1,12 @@
+Spectrogram Data Augmentation Results
+==================================================
+Method: Time Reversal (Horizontal Flip)
+Semantic Validity: High - reversed heart sounds are still valid
+
+augmentation_method: time_reversed_horizontal_flip
+original_count: 464
+augmented_count: 464
+total_count: 928
+dataset_increase_percent: 100.0
+semantic_validity: high - time reversal preserves frequency relationships
+expected_benefit: improved temporal pattern recognition and generalization

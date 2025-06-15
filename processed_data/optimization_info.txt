@@ -1,0 +1,11 @@
+INDIVIDUAL Optimized Spectrogram Generation Results
+============================================================
+Each spectrogram optimized based on its own frequency content
+
+total_spectrograms: 464
+average_space_saved_percent: 73.72844827586206
+average_utilization_ratio: 0.2627155172413793
+average_optimized_bins: 7.881465517241379
+min_space_saved: 0.0
+max_space_saved: 83.33333333333334
+optimization_method: individual_per_file

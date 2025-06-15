@@ -307,7 +307,7 @@ def prepare_data_with_weights():
     print("Preparing dataset with class balancing...")
     
     # Load metadata
-    df = pd.read_csv('processed_data/complete_metadata.csv')
+    df = pd.read_csv('processed_data/complete_metadata_augmented.csv')
     print(f"Total samples: {len(df)}")
     
     # Check class distribution
