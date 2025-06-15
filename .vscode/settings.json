@@ -1,0 +1,11 @@
+{
+    "python.pythonPath": "./heart_murmur_env/bin/python",
+    "python.defaultInterpreterPath": "./heart_murmur_env/bin/python",
+    "python.terminal.activateEnvironment": true,
+    "python.terminal.activateEnvInCurrentTerminal": true,
+    "python.analysis.extraPaths": [
+        "./heart_murmur_env/lib/python3.13/site-packages"
+    ],
+    "python.analysis.autoImportCompletions": true,
+    "python.analysis.typeCheckingMode": "basic"
+} 

@@ -1,0 +1,24 @@
+# Audio processing and ML packages for M3 Mac (Python 3.13 compatible)
+librosa>=0.10.0
+matplotlib>=3.8.0
+numpy>=1.24.0
+pandas>=2.2.0
+scikit-learn>=1.4.0
+seaborn>=0.13.0
+Pillow>=10.0.0
+scipy>=1.11.0
+
+# PyTorch for M3 Mac (CPU optimized)
+torch>=2.1.0
+torchvision>=0.16.0
+torchaudio>=2.1.0
+
+# Optional: Jupyter for exploration
+jupyter>=1.0.0
+notebook>=7.0.0
+
+# Progress bars
+tqdm>=4.66.0
+
+# Audio file handling
+soundfile>=0.12.0 
