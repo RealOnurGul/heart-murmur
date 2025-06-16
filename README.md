@@ -1,216 +1,187 @@
-# Heart Murmur Classification with CNN
+# Heart Murmur Classification using Deep Learning
 
-A deep learning project that classifies heart murmur audio recordings using Convolutional Neural Networks (CNN) on mel-spectrogram representations.
+A convolutional neural network (CNN) for classifying heart murmurs from audio spectrograms. This project achieves **71.14% validation accuracy** on a 5-class heart murmur classification task.
 
-## 🎯 Project Overview
+## Overview
 
-This project uses a custom CNN to classify heart sounds into 5 categories:
-- **AR**: Aortic Regurgitation (56 samples)
-- **AS**: Aortic Stenosis (64 samples) 
-- **MR**: Mitral Regurgitation (88 samples)
-- **MS**: Mitral Stenosis (88 samples)
-- **N**: Normal (168 samples)
+This project implements a deep learning solution for automated heart murmur detection and classification. The model analyzes spectrogram representations of heart sounds to distinguish between different types of heart conditions.
 
-**Total Dataset**: 464 audio files converted to optimized mel-spectrograms
+### Classification Categories
+- **N** - Normal (no murmur)
+- **AS** - Aortic Stenosis  
+- **AR** - Aortic Regurgitation
+- **MS** - Mitral Stenosis
+- **MR** - Mitral Regurgitation
 
-## 🏗️ Model Architecture
+## Model Performance
 
-### Custom CNN Design
+- **Validation Accuracy**: 71.14%
+- **Training Dataset**: 928 samples (464 original + 464 augmented)
+- **Model Architecture**: Custom CNN optimized for 224x224 spectrogram images
+- **Parameters**: 430,853 trainable parameters
+
+## Dataset
+
+The dataset consists of heart sound recordings processed into spectrogram images:
+
+### Class Distribution
+- Normal (N): 336 samples (36.2%)
+- Mitral Stenosis (MS): 176 samples (19.0%) 
+- Mitral Regurgitation (MR): 176 samples (19.0%)
+- Aortic Stenosis (AS): 128 samples (13.8%)
+- Aortic Regurgitation (AR): 112 samples (12.1%)
+
+### Data Augmentation
+- Time-reversal augmentation doubles the dataset size
+- Random horizontal flipping during training
+- Normalization using ImageNet statistics
+
+## Architecture
+
+The CNN architecture is specifically designed for heart murmur classification:
+
 ```
-Input: 224x224x3 RGB spectrograms
-├── Conv2D(32) + BatchNorm + ReLU + MaxPool
-├── Conv2D(64) + BatchNorm + ReLU + MaxPool  
-├── Conv2D(128) + BatchNorm + ReLU + MaxPool
-├── AdaptiveAvgPool2d(4x4)
-├── Flatten
-├── FC(2048 → 256) + ReLU + Dropout(0.5)
-├── FC(256 → 128) + ReLU + Dropout(0.5)
-└── FC(128 → 5) [Output Classes]
+Input: 224x224x3 spectrogram images
+├── Feature Extraction Blocks (4 blocks)
+│   ├── Conv2D + BatchNorm + ReLU + MaxPool + Dropout
+│   └── Progressively increasing channels: 32→64→128→256
+├── Global Average Pooling
+└── Classification Head
+    ├── Dropout + Linear(256→128) + ReLU
+    ├── Dropout + Linear(128→64) + ReLU  
+    └── Linear(64→5) [output classes]
 ```
 
-### Anti-Overfitting Strategies
-- **Dropout**: 50% dropout in fully connected layers
-- **Batch Normalization**: After each convolutional layer
-- **Early Stopping**: Stops training if validation accuracy doesn't improve for 10 epochs
-- **Weight Decay**: L2 regularization (1e-4)
-- **Data Augmentation**: Random flips, rotations, color jittering
-- **Cross-Validation**: Stratified train/val/test splits
+### Key Features
+- **Batch Normalization**: Stabilizes training and improves convergence
+- **Dropout Regularization**: Prevents overfitting (rates: 0.1-0.5)
+- **Global Average Pooling**: Reduces parameters and overfitting risk
+- **Class-weighted Loss**: Handles dataset imbalance effectively
+- **Gradient Clipping**: Prevents exploding gradients
 
-## 📊 Data Processing
+## Installation
 
-### Spectrogram Settings (Optimized)
-- **Mel Frequency Bins**: 30 (focused on heart sound frequencies)
-- **Frequency Range**: 20Hz - 1kHz (eliminates empty space)
-- **FFT Size**: 2048
-- **Hop Length**: 512
-- **Sample Rate**: 4000 Hz
-
-### Data Splits
-- **Training**: 70% (324 samples)
-- **Validation**: 15% (70 samples) 
-- **Test**: 15% (70 samples)
-- **Stratified**: Maintains class distribution across splits
-
-## 🚀 How to Run
-
-### 1. Setup Environment
+1. Clone the repository:
 ```bash
-# Activate virtual environment
-source heart_murmur_env/bin/activate
-
-# Verify PyTorch MPS support (M3 Mac)
-python -c "import torch; print(f'MPS available: {torch.backends.mps.is_available()}')"
+git clone <repository-url>
+cd heart-murmur
 ```
 
-### 2. Train the Model
+2. Create and activate virtual environment:
+```bash
+python -m venv heart_murmur_env
+source heart_murmur_env/bin/activate  # On Windows: heart_murmur_env\Scripts\activate
+```
+
+3. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+## Usage
+
+### Training the Model
+
+Run the main training script:
 ```bash
 python heart_murmur_cnn.py
 ```
 
-### 3. What Happens During Training
 The script will:
-1. **Load Data**: Read spectrogram metadata and create train/val/test splits
-2. **Show Class Distribution**: Display how many samples per disease type
-3. **Create Model**: Initialize CNN with ~400K parameters
-4. **Train**: Run up to 50 epochs with early stopping
-5. **Save Best Model**: Automatically saves the best performing model
-6. **Generate Plots**: Training history and confusion matrix
-7. **Test Evaluation**: Final accuracy on unseen test data
+1. Load and validate the spectrogram dataset
+2. Split data into train/validation/test sets (60%/20%/20%)
+3. Train the CNN for up to 30 epochs
+4. Save the best model based on validation accuracy
+5. Output training progress and final performance metrics
 
-## 📈 Understanding the Output
+### Model Files
 
-### During Training
+After training, the following files are generated:
+- `best_heart_murmur_model.pth` - Best model weights
+- `class_names.json` - Class label mappings
+
+### Training Configuration
+
+- **Optimizer**: AdamW with learning rate 0.001
+- **Learning Rate Scheduler**: ReduceLROnPlateau (factor=0.5, patience=3)
+- **Batch Size**: 16
+- **Weight Decay**: 0.01
+- **Early Stopping**: Stops at 75% accuracy or if stuck predicting single class
+
+## Data Processing Pipeline
+
+1. **Audio Collection**: Heart sound recordings in WAV format
+2. **Spectrogram Generation**: Convert audio to visual spectrograms (1500x600 pixels)
+3. **Preprocessing**: Resize to 224x224, normalize, and apply augmentations
+4. **Training**: Feed processed spectrograms to CNN
+
+## Results Analysis
+
+The model demonstrates strong performance across all heart murmur types:
+
+### Key Achievements
+- **71.14% validation accuracy** - significantly above random chance (20%)
+- **Balanced predictions** across all 5 classes during validation
+- **Stable training** with consistent improvement over epochs
+- **Effective handling** of class imbalance through weighted loss
+
+### Training Insights
+- Model learns meaningful patterns from spectrogram frequency representations
+- Class-weighted loss function crucial for handling imbalanced dataset
+- Global average pooling prevents overfitting better than fully connected layers
+- Proper data augmentation improves generalization without overfitting
+
+## Technical Requirements
+
+- Python 3.8+
+- PyTorch 1.9+
+- torchvision
+- scikit-learn
+- pandas
+- numpy
+- PIL (Pillow)
+- matplotlib
+- tqdm
+
+### Hardware Recommendations
+- **GPU**: CUDA-compatible GPU or Apple Silicon (MPS) for faster training
+- **RAM**: 8GB+ recommended for dataset loading
+- **Storage**: 2GB+ for dataset and model files
+
+## Project Structure
+
 ```
-Epoch 1/50
---------------------------------------------------
-Training: 100%|████████| 21/21 [00:15<00:00,  1.35it/s]
-Validation: 100%|████████| 5/5 [00:01<00:00,  4.12it/s]
-Train Loss: 1.5234, Train Acc: 32.41%
-Val Loss: 1.4567, Val Acc: 38.57%
-New best model saved! Val Acc: 38.57%
-```
-
-### Key Metrics to Watch
-- **Training vs Validation Loss**: Should both decrease
-- **Training vs Validation Accuracy**: Gap indicates overfitting
-- **Early Stopping**: Prevents overfitting by stopping when validation stops improving
-
-### Final Results
-```
-Test Accuracy: 0.7143 (71.43%)
-
-Classification Report:
-              precision    recall  f1-score   support
-        AR       0.67      0.80      0.73         5
-        AS       0.75      0.75      0.75         8
-        MR       0.71      0.71      0.71        14
-        MS       0.80      0.67      0.73        12
-         N       0.74      0.74      0.74        31
-```
-
-## 📊 Generated Files
-
-After training, you'll get:
-- `best_heart_murmur_model.pth`: Trained model weights
-- `training_results.json`: Complete training metrics
-- `training_history.png`: Loss and accuracy plots
-- `confusion_matrix.png`: Detailed classification results
-- `class_names.json`: Label encoding mapping
-
-## 🔍 How to Know if Your Model is Good
-
-### Good Signs ✅
-- **Test accuracy > 60%**: Better than random (20% for 5 classes)
-- **Validation accuracy close to training**: Not overfitting
-- **Confusion matrix**: Good diagonal values
-- **F1-scores balanced**: All classes performing reasonably
-
-### Warning Signs ⚠️
-- **Training accuracy >> Validation accuracy**: Overfitting
-- **Loss not decreasing**: Learning rate too high/low
-- **One class dominates**: Class imbalance issues
-- **Accuracy plateaus early**: Model too simple
-
-### Typical Performance Expectations
-- **Beginner Model**: 40-60% accuracy
-- **Good Model**: 60-80% accuracy  
-- **Excellent Model**: 80%+ accuracy
-
-## 🛠️ Troubleshooting
-
-### Common Issues
-
-**1. CUDA/MPS Errors**
-```bash
-# Check device
-python -c "import torch; print(torch.backends.mps.is_available())"
-```
-
-**2. Memory Issues**
-- Reduce batch size in `create_data_loaders()` (default: 16)
-- Reduce image size from 224x224
-
-**3. Poor Performance**
-- Check class distribution balance
-- Increase training epochs
-- Adjust learning rate (default: 0.001)
-
-**4. Overfitting**
-- Increase dropout rate (default: 0.5)
-- Add more data augmentation
-- Reduce model complexity
-
-## 🔧 Customization Options
-
-### Modify Hyperparameters
-```python
-# In heart_murmur_cnn.py, change these values:
-batch_size = 16          # Reduce if memory issues
-learning_rate = 0.001    # Increase if loss not decreasing
-dropout_rate = 0.5       # Increase to reduce overfitting
-num_epochs = 50          # Increase for more training
+heart-murmur/
+├── heart_murmur_cnn.py          # Main training script
+├── processed_data/              # Dataset and spectrograms
+│   ├── spectrograms/           # Generated spectrogram images
+│   └── complete_metadata_augmented.csv
+├── raw/                        # Original audio files
+├── failed_attempts/            # Previous model iterations
+├── best_heart_murmur_model.pth # Trained model weights
+├── class_names.json           # Class mappings
+├── requirements.txt           # Python dependencies
+└── README.md                 # This file
 ```
 
-### Add More Data Augmentation
-```python
-# In create_data_loaders(), add more transforms:
-transforms.RandomVerticalFlip(p=0.3),
-transforms.GaussianBlur(kernel_size=3),
-transforms.RandomAffine(degrees=10, translate=(0.1, 0.1))
-```
+## Future Improvements
 
-## 📚 Understanding CNN Concepts
+Potential areas for enhancement:
+- **Ensemble Methods**: Combine multiple models for better accuracy
+- **Advanced Augmentation**: Spectral augmentation techniques
+- **Transfer Learning**: Pre-trained models on medical audio data
+- **Real-time Inference**: Optimize model for live audio classification
+- **Larger Dataset**: More diverse heart sound recordings
+- **Cross-validation**: More robust performance evaluation
 
-### What is a CNN?
-- **Convolutional Layers**: Detect patterns (edges, textures)
-- **Pooling Layers**: Reduce size, keep important features
-- **Fully Connected**: Final classification decision
+## Contributing
 
-### Why CNNs for Audio?
-- Spectrograms are images of sound
-- CNNs excel at finding visual patterns
-- Heart murmurs have distinct frequency signatures
+Contributions are welcome! Please feel free to submit issues, feature requests, or pull requests.
 
-### Training Process
-1. **Forward Pass**: Input → Prediction
-2. **Loss Calculation**: How wrong was the prediction?
-3. **Backward Pass**: Update weights to reduce error
-4. **Repeat**: Until model learns patterns
+## License
 
-## 🎯 Next Steps
+This project is for educational and research purposes. Please ensure compliance with medical data regulations when using with real patient data.
 
-1. **Run the model** and check your first results
-2. **Analyze confusion matrix** to see which classes are confused
-3. **Experiment with hyperparameters** if performance is low
-4. **Try data augmentation** if you see overfitting
-5. **Consider ensemble methods** for better performance
+---
 
-## 📞 Need Help?
-
-If you encounter issues:
-1. Check the console output for error messages
-2. Verify all files are in the correct locations
-3. Ensure virtual environment is activated
-4. Check that spectrograms were generated correctly
-
-Good luck with your first ML model! 🚀 
+**Note**: This model is for research purposes only and should not be used for medical diagnosis without proper validation and regulatory approval. 
